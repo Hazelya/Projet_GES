@@ -53,7 +53,7 @@ def createMap(depart, arrive):
         vehicules = 'Voiture Thermique, Voiture électrique, Moto, Scooter ou moto légère'
 
         # Ajouter les coordonnées sous forme de tuple (latitude, longitude) à la liste
-        line_nodes.append((network, latitude, longitude))
+        line_nodes.append((vehicules, latitude, longitude))
 
     for node in shortest_chemin:
         # Récupérer la latitude et la longitude du nœud
@@ -81,38 +81,14 @@ def createMap(depart, arrive):
 
     # --------------- Enregistrement --------------
 
-    # Sauvegarder en tant que fichier HTML
-    #fig.write_html("../ressources/carteTemporaire.html")
-
-    #print("Carte créé")
-
-
-    # -------------- Correction -----------------
-
-    # --------------- Enregistrement --------------
-    # Générer un nom de fichier unique avec un timestamp
-    timestamp = int(time.time())
-    filename = f"../ressources/carte_{timestamp}.html"
 
     # Sauvegarder en tant que fichier HTML
-    fig.write_html(filename)
+    fig.write_html("../ressources/carteTemporaire.html")
 
-    # Créer un fichier "pointer" qui contient le chemin vers la dernière carte
-    with open("../ressources/carteTemporaire.html", "w") as f:
-        f.write(f"""
-        <html>
-        <head>
-            <meta http-equiv="refresh" content="0;url={filename}">
-        </head>
-        <body>
-            <script>
-                window.location.href = "{filename}";
-            </script>
-        </body>
-        </html>
-        """)
+    print("Carte créé")
 
-    print(json.dumps({"carte": filename}))
+
+
 
 
 

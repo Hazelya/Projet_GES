@@ -33,7 +33,7 @@ $('#buttonGES').click((e) => {
                 }
             }
         })
-        .catch(error => { // s'il y a une quelconque erreur liée au fichier calcul.js
+        .catch(error => { // s'il y a une quelconque erreur liée au fichier
             document.getElementById('resultat').innerHTML = '<div class="alert alert-danger">Une erreur s\'est produite.</div>';
         });
 });
@@ -70,10 +70,10 @@ $('#buttonCarte').click((e) => {
         .then(data => { // si on récupère bien une info du php
             const results = document.getElementById('resultat');
             results.innerHTML = '';
+            results.innerHTML = `<iframe src="../ressources/carteTemporaire.html" width="100%" height="500"></iframe>`;
 
-            results.innerHTML += `<div id="cartetest"><iframe src="../ressources/carteTemporaire.html" width="100%" height="500"></iframe></div>`;
         })
-        .catch(error => { // s'il y a une quelconque erreur liée au fichier calcul.js
+        .catch(error => { // s'il y a une quelconque erreur liée au fichier
             document.getElementById('resultat').innerHTML = '<div class="alert alert-danger">Une erreur s\'est produite.</div>';
         });
 });
