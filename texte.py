@@ -1,4 +1,0 @@
-print("Hello")
-
-print("Bonjour")
-
