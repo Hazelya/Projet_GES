@@ -27,7 +27,7 @@ def afficher_carte(shortest_route, graph_drive, mode):
 
     fig.write_html("carteTemporaire.html")
 
-def createMAP(depart, arrive, mode):
+def creer_carte(depart, arrive, mode):
     start_latlng = geocodage(depart)
     end_latlng = geocodage(arrive)
 
@@ -56,10 +56,10 @@ if __name__ == '__main__':
     #depart = sys.argv[1]
     #arrive = sys.argv[2]
     #mode = sys.argv[3]
-    #createMAP(depart, arrive, mode)
+    #creer_carte(depart, arrive, mode)
 
     #vscode
     #depart = "Caen"
     #arrive = "Ouistreham"
     #mode = "voiture"  
-    #createMAP(depart, arrive, mode)
+    #creer_carte(depart, arrive, mode)
