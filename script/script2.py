@@ -7,6 +7,8 @@ from geopy.geocoders import Nominatim
 
 import requests
 
+
+
 def calcul(depart, arrive):
 
     # Initialiser le géocodeur
@@ -24,7 +26,6 @@ def calcul(depart, arrive):
 
     # Appelle de fonction selon le type de trajet (route, chemin...)
     route(start_latlng, end_latlng, tableau)
-
     walk(start_latlng, end_latlng, tableau)
 
     # trie le tableau dans l'ordre croissant de taux de GES
@@ -32,7 +33,6 @@ def calcul(depart, arrive):
 
     # Réponse du script (sera récupéré par le php)
     print(json.dumps(sorted_tableau, ensure_ascii=False, indent=4))
-
 
 
 
@@ -96,5 +96,3 @@ if __name__ == '__main__':
     arrive = sys.argv[2]
 
     calcul(depart, arrive)
-
-

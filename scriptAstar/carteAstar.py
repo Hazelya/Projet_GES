@@ -1,11 +1,22 @@
 import sys
 import json
 
+import mpu
 import networkx as nx
 import osmnx as ox
+import pandas as pd
 from geopy.geocoders import Nominatim
 import plotly.express as px
-import pandas as pd
+
+
+def heuristic(n1, n2, graph):
+    """Heuristique basée sur la distance euclidienne mise à l'échelle pour approximer la distance terrestre"""
+    lat1, lon1 = graph.nodes[n1]['y'], graph.nodes[n1]['x']
+    lat2, lon2 = graph.nodes[n2]['y'], graph.nodes[n2]['x']
+
+    dist = mpu.haversine_distance((lat1, lon1), (lat2, lon2))
+    return dist
+
 
 
 
@@ -28,7 +39,8 @@ def createMap(depart, arrive):
     orig_node = ox.nearest_nodes(graph_drive, X=start_latlng[1],Y=start_latlng[0])
     dest_node = ox.nearest_nodes(graph_drive, X=end_latlng[1], Y=end_latlng[0])
 
-    shortest_route = nx.shortest_path(graph_drive, orig_node, dest_node, method='dijkstra')
+    shortest_route = nx.astar_path(graph_drive, orig_node, dest_node,
+                                   heuristic=lambda n1, n2: heuristic(n1, n2, graph_drive))
 
     # --------------- Chemin ---------------------
 
@@ -38,7 +50,8 @@ def createMap(depart, arrive):
     orig_node = ox.nearest_nodes(graph_walk, X=start_latlng[1], Y=start_latlng[0])  # find the nearest node to the end location
     dest_node = ox.nearest_nodes(graph_walk, X=end_latlng[1], Y=end_latlng[0])
 
-    shortest_chemin = nx.shortest_path(graph_walk, orig_node, dest_node, method='dijkstra')
+    shortest_chemin = nx.astar_path(graph_walk, orig_node, dest_node,
+                                   heuristic=lambda n1, n2: heuristic(n1, n2, graph_walk))
 
     # ------------- DataFrame --------------------
 
@@ -50,22 +63,22 @@ def createMap(depart, arrive):
         # Récupérer la latitude et la longitude du nœud
         latitude = graph_drive.nodes[node]['y']
         longitude = graph_drive.nodes[node]['x']
-        vehicules = 'Voiture Thermique, Voiture électrique, Moto, Scooter ou moto légère'
+        network = 'Voiture Thermique, Voiture électrique, Moto, Scooter ou moto légère'
 
         # Ajouter les coordonnées sous forme de tuple (latitude, longitude) à la liste
-        line_nodes.append((vehicules, latitude, longitude))
+        line_nodes.append((network, latitude, longitude))
 
     for node in shortest_chemin:
         # Récupérer la latitude et la longitude du nœud
         latitude = graph_walk.nodes[node]['y']
         longitude = graph_walk.nodes[node]['x']
-        vehicules = 'Vélo (ou trottinette) à assistance électrique, Vélo ou marche'
+        network = 'Vélo (ou trottinette) à assistance électrique, Vélo ou marche'
 
         # Ajouter les coordonnées sous forme de tuple (latitude, longitude) à la liste
-        line_nodes.append((vehicules, latitude, longitude))
+        line_nodes.append((network, latitude, longitude))
 
     # Convertir les coordonnées en DataFrame pour Plotly Express
-    line_df = pd.DataFrame(line_nodes, columns=['Véhicules', 'latitude', 'longitude'])
+    line_df = pd.DataFrame(line_nodes, columns=['network', 'latitude', 'longitude'])
 
     # ----------------- Carte ---------------------
 
@@ -74,22 +87,18 @@ def createMap(depart, arrive):
         line_df,
         lat='latitude',
         lon='longitude',
-        color='Véhicules',
+        color='network',
+        title="Chemin le plus court",
         mapbox_style="open-street-map",
         zoom=12
     )
 
     # --------------- Enregistrement --------------
 
-
-    # Sauvegarder en tant que fichier HTML
+   # Sauvegarder en tant que fichier HTML
     fig.write_html("../ressources/carteTemporaire.html")
 
     print("Carte créé")
-
-
-
-
 
 
 
@@ -103,3 +112,5 @@ if __name__ == '__main__':
     arrive = sys.argv[2]
 
     createMap(depart, arrive)
+
+
