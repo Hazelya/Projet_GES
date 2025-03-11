@@ -1,65 +1,106 @@
-import plotly.express as px
-import pandas as pd
-from calcul import distance1, get_carbon, calcule_prix, temps_de_trajet, geocodage, get_route
 import sys
-import osmnx as ox
+import json
 
-def afficher_carte(shortest_route, graph_drive, mode):
+import networkx as nx
+import osmnx as ox
+import pandas as pd
+from geopy.geocoders import Nominatim
+import plotly.express as px
+
+
+
+
+
+
+
+def createMap(depart, arrive):
+
+    geolocator = Nominatim(user_agent="myGeocoder")
+
+    # Géocoder l'adresse
+    location = geolocator.geocode(depart)
+    location_2 = geolocator.geocode(arrive)
+
+    start_latlng = (location.latitude, location.longitude)
+    end_latlng = (location_2.latitude, location_2.longitude)
+
+    # ---------------- Route --------------------
+
+    graph_drive = ox.load_graphml("../graphCalvados/graph_drive.graphml")
+
+    # Trouver le nœud le plus proche de l'emplacement de départ
+    orig_node = ox.nearest_nodes(graph_drive, X=start_latlng[1],Y=start_latlng[0])
+    dest_node = ox.nearest_nodes(graph_drive, X=end_latlng[1], Y=end_latlng[0])
+
+    shortest_route = nx.shortest_path(graph_drive, orig_node, dest_node, method='dijkstra')
+
+    # --------------- Chemin ---------------------
+
+    graph_walk = ox.load_graphml("../graphCalvados/graph_walk.graphml")
+
+    # find the nearest node to the start location
+    orig_node = ox.nearest_nodes(graph_walk, X=start_latlng[1], Y=start_latlng[0])  # find the nearest node to the end location
+    dest_node = ox.nearest_nodes(graph_walk, X=end_latlng[1], Y=end_latlng[0])
+
+    shortest_chemin = nx.shortest_path(graph_walk, orig_node, dest_node, method='dijkstra')
+
+    # ------------- DataFrame --------------------
+
+    # Initialiser une liste pour stocker les coordonnées des nœuds
     line_nodes = []
 
+    # Parcourir tous les nœuds du chemin le plus court
     for node in shortest_route:
+        # Récupérer la latitude et la longitude du nœud
         latitude = graph_drive.nodes[node]['y']
         longitude = graph_drive.nodes[node]['x']
-        vehicules = f'{mode}'
-        line_nodes.append((vehicules, latitude, longitude))
+        network = 'Voiture Thermique, Voiture électrique, Moto, Scooter ou moto légère'
 
-    line_df = pd.DataFrame(line_nodes, columns=['Mode de transport', 'latitude', 'longitude'])
+        # Ajouter les coordonnées sous forme de tuple (latitude, longitude) à la liste
+        line_nodes.append((network, latitude, longitude))
 
+    for node in shortest_chemin:
+        # Récupérer la latitude et la longitude du nœud
+        latitude = graph_walk.nodes[node]['y']
+        longitude = graph_walk.nodes[node]['x']
+        network = 'Vélo (ou trottinette) à assistance électrique, Vélo ou marche'
+
+        # Ajouter les coordonnées sous forme de tuple (latitude, longitude) à la liste
+        line_nodes.append((network, latitude, longitude))
+
+    # Convertir les coordonnées en DataFrame pour Plotly Express
+    line_df = pd.DataFrame(line_nodes, columns=['network', 'latitude', 'longitude'])
+
+    # ----------------- Carte ---------------------
+
+    # Afficher le chemin avec Plotly Express
     fig = px.line_mapbox(
         line_df,
         lat='latitude',
         lon='longitude',
-        color='Mode de transport',
+        color='network',
+        title="Chemin le plus court",
         mapbox_style="open-street-map",
         zoom=12
     )
-    fig.show()
 
-    fig.write_html("carteTemporaire.html")
+    # --------------- Enregistrement --------------
 
-def creer_carte(depart, arrive, mode):
-    start_latlng = geocodage(depart)
-    end_latlng = geocodage(arrive)
+    # Sauvegarder en tant que fichier HTML
+    fig.write_html("carte.html")
 
-    graph_drive_path = "/Users/joelmwemba/Desktop/Teste3/projet/Calvados.graphml"
-    graph_drive = ox.load_graphml(graph_drive_path)
 
-    shortest_route = get_route(graph_drive, start_latlng, end_latlng)
-    distance_km = distance1(graph_drive, shortest_route)
-    prix = calcule_prix(distance_km, mode)
-    temps_trajet = temps_de_trajet(distance_km, mode)
-    impact_carbon = get_carbon(mode, distance_km)
 
-    afficher_carte(shortest_route, graph_drive, mode)
 
-    print("\n========== Résultats ==========")
-    print(f"Mode de transport: {mode.capitalize()}")
-    print(f"Distance: {distance_km:.2f} km")
-    print(f"Temps estimé: {temps_trajet:.2f} minutes")
-    print(f"Coût estimé: {prix:.2f} €")
-    print(f"Impact Carbone: {impact_carbon:.2f} Kg CO2e")
 
 if __name__ == '__main__':
-    #php
-    #if len(sys.argv) != 4:
-        ##sys.exit(1)
-    #depart = sys.argv[1]
-    #arrive = sys.argv[2]
-    #mode = sys.argv[3]
-    #creer_carte(depart, arrive, mode)
+    if len(sys.argv) != 3:
+        print("Usage: python script.py <depart> <arrive>")
+        sys.exit(1)
 
-    #vscode
-    #depart = "Caen"
-    #arrive = "Ouistreham"
-    #mode = "voiture"  
-    #creer_carte(depart, arrive, mode)
+    depart = sys.argv[1]
+    arrive = sys.argv[2]
+
+    createMap(depart, arrive)
+
+

@@ -1,17 +1,11 @@
-import math
 import sys
 import json
-from traceback import print_tb
 
 import networkx as nx
 import osmnx as ox
-from geopy.distance import geodesic
 from geopy.geocoders import Nominatim
 
 import requests
-import mpu
-
-
 
 def calcul(depart, arrive):
 
@@ -28,11 +22,10 @@ def calcul(depart, arrive):
 
     tableau = {} # Tableau qui contient les infos des transports (dictionnaire)
 
-
     # Appelle de fonction selon le type de trajet (route, chemin...)
     route(start_latlng, end_latlng, tableau)
-    walk(start_latlng, end_latlng, tableau)
 
+    walk(start_latlng, end_latlng, tableau)
 
     # trie le tableau dans l'ordre croissant de taux de GES
     sorted_tableau = dict(sorted(tableau.items(), key=lambda item:item[1]))
@@ -40,15 +33,6 @@ def calcul(depart, arrive):
     # Réponse du script (sera récupéré par le php)
     print(json.dumps(sorted_tableau, ensure_ascii=False, indent=4))
 
-
-
-def heuristic(n1, n2, graph):
-    """Heuristique basée sur la distance euclidienne mise à l'échelle pour approximer la distance terrestre"""
-    lat1, lon1 = graph.nodes[n1]['y'], graph.nodes[n1]['x']
-    lat2, lon2 = graph.nodes[n2]['y'], graph.nodes[n2]['x']
-
-    dist = mpu.haversine_distance((lat1, lon1), (lat2, lon2))
-    return dist
 
 
 
@@ -61,23 +45,8 @@ def route(start_latlng, end_latlng, tableau):
     dest_node = ox.nearest_nodes(graph_drive, X=end_latlng[1], Y=end_latlng[0])
 
     # Calcul le chemin le plus court
-    # Utilisation de A*
-    shortest_route = nx.astar_path(graph_drive, orig_node, dest_node,
-                                    heuristic=lambda n1, n2: heuristic(n1, n2, graph_drive))
-
-    # Calcul de la distance totale du trajet (en mètres)
-    total_distance = 0
-    for i in range(len(shortest_route) - 1):
-        edge_data = graph_drive.get_edge_data(shortest_route[i], shortest_route[i + 1])
-        if edge_data:  # Vérification que l'arête existe
-
-            # Certaines arêtes peuvent avoir plusieurs "versions" (multi-graph)
-            distance = min(d['length'] for d in edge_data.values())
-
-            total_distance += distance
-
-    # Conversion en kilomètres
-    shortest_route_km = total_distance / 1000
+    shortest_route_length = nx.shortest_path_length(graph_drive, orig_node, dest_node, weight='length', method='dijkstra') # 'length' renvoie le chemin en metre
+    shortest_route_km = shortest_route_length / 1000 # convertir en km
 
     transport = ['4', '5', '12', '13'] # Id des transports qui nous intéressent dans l'api
 
@@ -100,31 +69,14 @@ def walk(start_latlng, end_latlng, tableau):
     orig_node = ox.nearest_nodes(graph_walk, X=start_latlng[1],Y=start_latlng[0])
     dest_node = ox.nearest_nodes(graph_walk, X=end_latlng[1], Y=end_latlng[0])
 
-    # Calcul le chemin le plus court
-    # Utilisation de A*
-    shortest_route = nx.astar_path(graph_walk, orig_node, dest_node,
-                                   heuristic=lambda n1, n2: heuristic(n1, n2, graph_walk))
-
-
-    # Calcul de la distance totale du trajet (en mètres)
-    total_distance = 0
-    for i in range(len(shortest_route) - 1):
-        edge_data = graph_walk.get_edge_data(shortest_route[i], shortest_route[i + 1])
-        if edge_data:  # Vérification que l'arête existe
-
-            # Certaines arêtes peuvent avoir plusieurs "versions" (multi-graph)
-            distance = min(d['length'] for d in edge_data.values())
-
-            total_distance += distance
-
-    # Conversion en kilomètres
-    shortest_chemin_km = total_distance / 1000
+    shortest_route_length = nx.shortest_path_length(graph_walk, orig_node, dest_node, weight='length', method='dijkstra')
+    shortest_route_km = shortest_route_length / 1000
 
     transport = ['7', '8'] # Id des transports qui nous intéressent dans l'api
 
     for i in transport :
         # Demande à l'api de calculer le GES
-        url = "https://impactco2.fr/api/v1/transport?km=" + str(shortest_chemin_km) + "&transports=" + str(i)
+        url = "https://impactco2.fr/api/v1/transport?km=" + str(shortest_route_km) + "&transports=" + str(i)
         reponse = requests.get(url)
         content = reponse.json()
         data = content['data']

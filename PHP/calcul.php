@@ -8,7 +8,7 @@ if (isset($_POST['depart']) && isset($_POST['arrive'])) { // On vérifie que dep
     $arrive = escapeshellarg($_POST['arrive']);
 
     // Commande pour exécuter le script Python
-    $command = "python ../scriptAstar/calcul_astar.py $depart $arrive";
+    $command = "python ../scriptDjikstra/script2.py $depart $arrive";
 
     // On exécute le script Python et on récupère la sortie
     $output = shell_exec($command);
