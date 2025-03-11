@@ -15,11 +15,8 @@ import time
 import mpu
 
 
-TIME = time.time()
 
 def calcul(depart, arrive):
-
-    print("TIME : ", TIME)
 
     # Initialiser le géocodeur
     geolocator = Nominatim(user_agent="myGeocoder")
@@ -34,19 +31,9 @@ def calcul(depart, arrive):
 
     tableau = {} # Tableau qui contient les infos des transports (dictionnaire)
 
-    preparation = time.time() - TIME
-    print("Preparation time: " + str(preparation))
-
     # Appelle de fonction selon le type de trajet (route, chemin...)
     route(start_latlng, end_latlng, tableau)
-
-    finroute = time.time() - TIME
-    print("Fin fonction route time: " + str(finroute))
-
     walk(start_latlng, end_latlng, tableau)
-
-    finwalk = time.time() - TIME
-    print("Fin fonction walktime: " + str(finwalk))
 
     # trie le tableau dans l'ordre croissant de taux de GES
     sorted_tableau = dict(sorted(tableau.items(), key=lambda item:item[1]))
@@ -54,8 +41,7 @@ def calcul(depart, arrive):
     # Réponse du script (sera récupéré par le php)
     print(json.dumps(sorted_tableau, ensure_ascii=False, indent=4))
 
-    fin = time.time() - TIME
-    print("Fin fonction fin time: " + str(fin))
+
 
 
 
@@ -77,16 +63,10 @@ def route(start_latlng, end_latlng, tableau):
     orig_node = ox.nearest_nodes(graph_drive, X=start_latlng[1],Y=start_latlng[0])
     dest_node = ox.nearest_nodes(graph_drive, X=end_latlng[1], Y=end_latlng[0])
 
-    avantastar = time.time() - TIME
-    print("Avant a_star time: " + str(avantastar))
-
     # Calcul le chemin le plus court
     # Utilisation de A*
     shortest_route = nx.astar_path(graph_drive, orig_node, dest_node,
                                     heuristic=lambda n1, n2: heuristic(n1, n2, graph_drive))
-
-    apresastar = time.time() - TIME
-    print("Apres a_star time: " + str(apresastar))
 
     # Calcul de la distance totale du trajet (en mètres)
     total_distance = 0
@@ -97,21 +77,10 @@ def route(start_latlng, end_latlng, tableau):
             # Certaines arêtes peuvent avoir plusieurs "versions" (multi-graph)
             distance = min(d['length'] for d in edge_data.values())
 
-            # Autre manière de faire :
-            """
-            distances = []
-            for d in edge_data.values():
-                distances.append(d['length'])
-            distance = min(distances) 
-            """
-
             total_distance += distance
 
     # Conversion en kilomètres
     shortest_route_km = total_distance / 1000
-
-    calclkm = time.time() - TIME
-    print("Calcul km time: " + str(calclkm))
 
     transport = ['4', '5', '12', '13'] # Id des transports qui nous intéressent dans l'api
 
@@ -149,14 +118,6 @@ def walk(start_latlng, end_latlng, tableau):
 
             # Certaines arêtes peuvent avoir plusieurs "versions" (multi-graph)
             distance = min(d['length'] for d in edge_data.values())
-
-            # Autre manière de faire :
-            """
-            distances = []
-            for d in edge_data.values():
-                distances.append(d['length'])
-            distance = min(distances) 
-            """
 
             total_distance += distance
 
