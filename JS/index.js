@@ -22,12 +22,17 @@ $('#buttonGES').click((e) => {
             if (data.error) { // si l'info est une erreur
                 results.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
             } else { // si l'info est le resultat
-                for (const [key, value] of Object.entries(data)) {
+                for (const [key, values] of Object.entries(data)) {
                     results.innerHTML += `
                                 <div class="card text-white bg-success mb-3">
                                     <div class="card-body">
                                         <h5 class="card-title" id="vehicule">${key}</h5>
-                                        <p class="card-text">${value.toFixed(2)} kg CO2e</p>
+                                        <p class="card-text">
+                                        Bilan carbone : ${values.carbone !== null ? values.carbone.toFixed(2) : 'N/A'} kg CO2<br>
+                                        Distance : ${values.distance_km.toFixed(2)} km, 
+                                        Temps : ${values.temps_min.toFixed(2)} min, 
+                                        Coût : ${values.prix.toFixed(2)} euro.
+                                        </p>
                                     </div>
                                 </div>`;
                 }
