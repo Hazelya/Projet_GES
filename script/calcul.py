@@ -126,7 +126,7 @@ def temps_de_trajet(distance_km, mode):
         vitesse_km = df.loc[df['mode_transport'] == mode, 'vitesse']
 
         if not vitesse_km.empty:
-            return distance_km / int(vitesse_km.values[0]) * 60
+            return distance_km / int(vitesse_km.values[0])
         else:
             print(f"Erreur pour le mode {mode} : non trouvé dans le fichier.")
             return None
