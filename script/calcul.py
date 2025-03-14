@@ -103,7 +103,7 @@ def calcule_prix(distance_km, mode):
         prix_km = df.loc[df['mode_transport'] == mode, 'prix']
 
         if not prix_km.empty:
-            return int(prix_km.values[0]) * distance_km
+            return float(prix_km.values[0]) * distance_km
         else:
             print(f"Erreur pour le mode {mode} : non trouvé dans le fichier.")
             return None
@@ -205,8 +205,8 @@ def calcul(depart, arrive):
             tableau[nom] = {
                 "distance_km": distance_km,
                 "carbone": carbon,
-                "prix": cost,
-                "temps_min": temps
+                "prix": round(cost, 2),
+                "temps_min": round(temps, 3)
             }
         except Exception as e:
             # Si on capte une erreur
