@@ -30,7 +30,7 @@ $('#buttonGES').click((e) => {
                                         <p class="card-text">
                                         Bilan carbone : ${values.carbone !== null ? values.carbone.toFixed(2) : 'N/A'} kg CO2<br>
                                         Distance : ${values.distance_km.toFixed(2)} km, 
-                                        Temps : ${values.temps_min.toFixed(2)} h, 
+                                        Temps : ${values.temps_min}, 
                                         Coût : ${values.prix.toFixed(2)} euro.
                                         </p>
                                     </div>

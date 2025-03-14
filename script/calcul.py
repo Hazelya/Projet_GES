@@ -126,7 +126,11 @@ def temps_de_trajet(distance_km, mode):
         vitesse_km = df.loc[df['mode_transport'] == mode, 'vitesse']
 
         if not vitesse_km.empty:
-            return distance_km / int(vitesse_km.values[0])
+            heure_decimal = distance_km / int(vitesse_km.values[0])
+            # Conversion et formatage simple
+            heures = int(heure_decimal)
+            minutes = round((heure_decimal - heures) * 60)
+            return f"{heures}h{minutes:02d}"
         else:
             print(f"Erreur pour le mode {mode} : non trouvé dans le fichier.")
             return None
@@ -206,7 +210,7 @@ def calcul(depart, arrive):
                 "distance_km": distance_km,
                 "carbone": carbon,
                 "prix": round(cost, 2),
-                "temps_min": round(temps, 3)
+                "temps_min": temps
             }
         except Exception as e:
             # Si on capte une erreur
