@@ -217,9 +217,9 @@ def calcul(depart, arrive):
             print(f"Erreur pour le mode {mode} : {e}")
 
 
-
+    sorted_tableau = dict(sorted(tableau.items(), key=lambda item: item[1]['carbone']))
     # Réponse du script (sera récupéré par le php)
-    print(json.dumps(tableau, ensure_ascii=False, indent=4))
+    print(json.dumps(sorted_tableau, ensure_ascii=False, indent=4))
     sys.stdout.flush()  # Pour être sûr que PHP reçoive tout
 
 
