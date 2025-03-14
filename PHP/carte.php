@@ -18,7 +18,7 @@ if (isset($_POST['depart']) && isset($_POST['arrive'])) { // On vérifie que dep
     }
 
     // Commande pour exécuter le script Python
-    $command = "python ../scriptAstar/carteAstar.py $depart $arrive";
+    $command = "python ../script/carte.py $depart $arrive";
 
     // On exécute le script Python et on récupère la sortie
     $output = shell_exec($command);
