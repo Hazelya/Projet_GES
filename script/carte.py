@@ -9,8 +9,9 @@ import pandas as pd
 from geopy.geocoders import Nominatim
 import plotly.express as px
 
+import folium
 
-import time
+
 
 
 def heuristic(n1, n2, graph):
@@ -25,7 +26,6 @@ def heuristic(n1, n2, graph):
 
 
 def createMap(depart, arrive):
-
     geolocator = Nominatim(user_agent="myGeocoder")
 
     # Géocoder l'adresse
@@ -35,14 +35,13 @@ def createMap(depart, arrive):
     start_latlng = (location.latitude, location.longitude)
     end_latlng = (location_2.latitude, location_2.longitude)
 
-
     # ---------------- Route --------------------
 
     with open("../graphCalvados/graph_drive.pkl", "rb") as f:
         graph_drive = pickle.load(f)
 
     # Trouver le nœud le plus proche de l'emplacement de départ
-    orig_node = ox.nearest_nodes(graph_drive, X=start_latlng[1],Y=start_latlng[0])
+    orig_node = ox.nearest_nodes(graph_drive, X=start_latlng[1], Y=start_latlng[0])
     dest_node = ox.nearest_nodes(graph_drive, X=end_latlng[1], Y=end_latlng[0])
 
     shortest_route = nx.astar_path(graph_drive, orig_node, dest_node,
@@ -54,61 +53,33 @@ def createMap(depart, arrive):
         graph_walk = pickle.load(f)
 
     # find the nearest node to the start location
-    orig_node = ox.nearest_nodes(graph_walk, X=start_latlng[1], Y=start_latlng[0])  # find the nearest node to the end location
+    orig_node = ox.nearest_nodes(graph_walk, X=start_latlng[1],
+                                 Y=start_latlng[0])  # find the nearest node to the end location
     dest_node = ox.nearest_nodes(graph_walk, X=end_latlng[1], Y=end_latlng[0])
 
     shortest_chemin = nx.astar_path(graph_walk, orig_node, dest_node,
-                                   heuristic=lambda n1, n2: heuristic(n1, n2, graph_walk))
+                                    heuristic=lambda n1, n2: heuristic(n1, n2, graph_walk))
+    # Carte Folium
+    map_folium = folium.Map(location=start_latlng, zoom_start=13)
 
+    route_coords = []
+    chemin_coords = []
 
-    # ------------- DataFrame --------------------
+    for node in shortest_route :
+        route_coords.append((graph_drive.nodes[node]['y'], graph_drive.nodes[node]['x']))
+    for node in shortest_chemin :
+        chemin_coords.append((graph_walk.nodes[node]['y'], graph_walk.nodes[node]['x']))
 
-    # Initialiser une liste pour stocker les coordonnées des nœuds
-    line_nodes = []
+    # Ajouter les lignes (PolyLine)
+    folium.PolyLine(route_coords, color='blue', weight=3, opacity=0.7).add_to(map_folium)
+    folium.PolyLine(chemin_coords, color='green', weight=3, opacity=0.7).add_to(map_folium)
 
-    # Parcourir tous les nœuds du chemin le plus court
-    for node in shortest_route:
-        # Récupérer la latitude et la longitude du nœud
-        latitude = graph_drive.nodes[node]['y']
-        longitude = graph_drive.nodes[node]['x']
-        network = 'Voiture Thermique, Voiture électrique, Moto, Scooter ou moto légère'
+    folium.Marker(start_latlng, popup="Départ").add_to(map_folium)
+    folium.Marker(end_latlng, popup="Arrivée", color='red').add_to(map_folium)
 
-        # Ajouter les coordonnées sous forme de tuple (latitude, longitude) à la liste
-        line_nodes.append((network, latitude, longitude))
-
-    for node in shortest_chemin:
-        # Récupérer la latitude et la longitude du nœud
-        latitude = graph_walk.nodes[node]['y']
-        longitude = graph_walk.nodes[node]['x']
-        network = 'Vélo (ou trottinette) à assistance électrique, Vélo ou marche'
-
-        # Ajouter les coordonnées sous forme de tuple (latitude, longitude) à la liste
-        line_nodes.append((network, latitude, longitude))
-
-    # Convertir les coordonnées en DataFrame pour Plotly Express
-    line_df = pd.DataFrame(line_nodes, columns=['network', 'latitude', 'longitude'])
-
-
-    # ----------------- Carte ---------------------
-
-    # Afficher le chemin avec Plotly Express
-    fig = px.line_mapbox(
-        line_df,
-        lat='latitude',
-        lon='longitude',
-        color='network',
-        title="Chemin le plus court",
-        mapbox_style="open-street-map",
-        zoom=12
-    )
-
-    # --------------- Enregistrement --------------
-
-    # Sauvegarder en tant que fichier HTML
-    fig.write_html("../ressources/carteTemporaire.html")
-
-    print("Carte créé")
-
+    # Sauvegarde
+    map_folium.save("../ressources/carteTemporaire.html")
+    print("Carte créée")
 
 
 
