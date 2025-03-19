@@ -12,8 +12,6 @@ import plotly.express as px
 import folium
 
 
-
-
 def heuristic(n1, n2, graph):
     """Heuristique basée sur la distance euclidienne mise à l'échelle pour approximer la distance terrestre"""
     lat1, lon1 = graph.nodes[n1]['y'], graph.nodes[n1]['x']
@@ -21,6 +19,19 @@ def heuristic(n1, n2, graph):
 
     dist = mpu.haversine_distance((lat1, lon1), (lat2, lon2))
     return dist
+
+
+def astar(graph, start_latlng, end_latlng) :
+    """
+    Retourne le chemin le plus court selon le graph (route, chemin...)
+    :param graph:
+    :param start_latlng:
+    :param end_latlng:
+    :return:
+    """
+    orig_node = ox.nearest_nodes(graph, X=start_latlng[1], Y=start_latlng[0])
+    dest_node = ox.nearest_nodes(graph, X=end_latlng[1], Y=end_latlng[0])
+    return nx.astar_path(graph, orig_node, dest_node, heuristic=lambda n1, n2: heuristic(n1, n2, graph))
 
 
 
@@ -40,42 +51,45 @@ def createMap(depart, arrive):
     with open("../graphCalvados/graph_drive.pkl", "rb") as f:
         graph_drive = pickle.load(f)
 
-    # Trouver le nœud le plus proche de l'emplacement de départ
-    orig_node = ox.nearest_nodes(graph_drive, X=start_latlng[1], Y=start_latlng[0])
-    dest_node = ox.nearest_nodes(graph_drive, X=end_latlng[1], Y=end_latlng[0])
-
-    shortest_route = nx.astar_path(graph_drive, orig_node, dest_node,
-                                   heuristic=lambda n1, n2: heuristic(n1, n2, graph_drive))
+    shortest_route = astar(graph_drive, start_latlng, end_latlng)
 
     # --------------- Chemin ---------------------
 
     with open("../graphCalvados/graph_walk.pkl", "rb") as f:
         graph_walk = pickle.load(f)
 
-    # find the nearest node to the start location
-    orig_node = ox.nearest_nodes(graph_walk, X=start_latlng[1],
-                                 Y=start_latlng[0])  # find the nearest node to the end location
-    dest_node = ox.nearest_nodes(graph_walk, X=end_latlng[1], Y=end_latlng[0])
+    shortest_chemin = astar(graph_walk, start_latlng, end_latlng)
 
-    shortest_chemin = nx.astar_path(graph_walk, orig_node, dest_node,
-                                    heuristic=lambda n1, n2: heuristic(n1, n2, graph_walk))
+    # --------------- Chemin ---------------------
+
+    with open("../graphCalvados/graph_train.pkl", "rb") as f:
+        graph_train = pickle.load(f)
+
+    shortest_fer = astar(graph_train, start_latlng, end_latlng)
+
+    # --------------- Carte ---------------------
+
     # Carte Folium
     map_folium = folium.Map(location=start_latlng, zoom_start=13)
 
     route_coords = []
     chemin_coords = []
+    train_coords = []
 
     for node in shortest_route :
         route_coords.append((graph_drive.nodes[node]['y'], graph_drive.nodes[node]['x']))
     for node in shortest_chemin :
         chemin_coords.append((graph_walk.nodes[node]['y'], graph_walk.nodes[node]['x']))
+    for node in shortest_fer :
+        train_coords.append((graph_train.nodes[node]['y'], graph_train.nodes[node]['x']))
 
     # Ajouter les lignes (PolyLine)
     folium.PolyLine(route_coords, color='blue', weight=3, opacity=0.7).add_to(map_folium)
-    folium.PolyLine(chemin_coords, color='green', weight=3, opacity=0.7).add_to(map_folium)
+    folium.PolyLine(chemin_coords, color='red', weight=3, opacity=0.7).add_to(map_folium)
+    folium.PolyLine(train_coords, color='green', weight=3, opacity=0.7).add_to(map_folium)
 
     folium.Marker(start_latlng, popup="Départ").add_to(map_folium)
-    folium.Marker(end_latlng, popup="Arrivée", color='red').add_to(map_folium)
+    folium.Marker(end_latlng, popup="Arrivée").add_to(map_folium)
 
     # Sauvegarde
     map_folium.save("../ressources/carteTemporaire.html")
