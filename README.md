@@ -14,7 +14,7 @@ Contient le script qui permet de télécharger les graphs
 Les graphs seront stocker dans ce même dossier
 
 ### Images 
-Contient les images, logo, legend ... nécéssaire au design du site
+Contient les images, logo, legend... nécéssaire au design du site
 
 ### JS 
 Contient le fichier JS qui gére :
@@ -42,7 +42,17 @@ python ./chemin/vers/lefichier/genererSauvegarde.py
 
 Télécharger les librairies nécéssaire : 
 
-    => 
+    => pickle
+    => sys
+    => json
+    => mpu
+    => networkx
+    => pickle
+    => osmnx
+    => geopy.geocoders.Nominatim
+    => pandas
+    => plotly.express
+    => folium
     => pip install git+https://github.com/Hazelya/packageGES.git
 
 Vous n'avez pu qu'a ouvrir le fichier html : index.html
