@@ -10,6 +10,7 @@ import mpu
 
 # Package personnel
 from packageGES.calcul_ges import calcul_emission, calcul_prix, calcul_temps
+from packageGES.bus import bus
 
 
 liste_transport = {
@@ -23,6 +24,7 @@ liste_transport = {
     "Vélo": "graph_walk",
     "Marche": "graph_walk",
     "TER" : "graph_train",
+    "Bus thermique": "graph_bus",
 }
 
 
@@ -91,6 +93,7 @@ def shortest_path(graph, start_latlng, end_latlng):
     return nx.astar_path(graph, orig_node, dest_node, heuristic=lambda n1, n2: heuristic(n1, n2, graph))
 
 
+
 def calcul(depart, arrive):
     """
     Calcul les émissions le prix... pour chaque véhicule entre deux adresses donnés
@@ -130,13 +133,22 @@ def calcul(depart, arrive):
                 distance_km = distance(graph_drive, route)
             elif graph == "graph_train" :
                 distance_km = distance(graph_train, fer)
+            elif graph == "graph_bus" :
+                distance_km, distance_trajet, chemin = bus(depart, arrive, "calcul")
             else:
                 distance_km = distance(graph_walk, chemin)
 
             # On récupère une par une les informations (fonction de notre propre package)
             carbon = calcul_emission(mode, distance_km)
             cost = calcul_prix(distance_km, mode)
-            temps = calcul_temps(distance_km, mode)
+
+            if graph == "graph_bus" :
+                temps_bus = calcul_temps(distance_km, mode)
+                temps_marche = calcul_temps((distance_trajet-distance_km), "Marche")
+                temps = temps_bus + " de bus et " + temps_marche + " de marche"
+                distance_km = distance_trajet # Manip pour quand on va le mettre dans le tableau
+            else :
+                temps = calcul_temps(distance_km, mode)
 
             nom = mode.encode().decode('unicode_escape') # decodage + encodage pour les caractères spéciaux dans le nom
 

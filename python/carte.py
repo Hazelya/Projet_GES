@@ -1,15 +1,13 @@
 import pickle
 import sys
-import json
-
 import mpu
 import networkx as nx
 import osmnx as ox
-import pandas as pd
 from geopy.geocoders import Nominatim
-import plotly.express as px
-
 import folium
+
+# Package personnel
+from packageGES.bus import bus
 
 
 def heuristic(n1, n2, graph):
@@ -60,12 +58,16 @@ def createMap(depart, arrive):
 
     shortest_chemin = astar(graph_walk, start_latlng, end_latlng)
 
-    # --------------- Chemin ---------------------
+    # --------------- Train ---------------------
 
     with open("../graphCalvados/graph_train.pkl", "rb") as f:
         graph_train = pickle.load(f)
 
     shortest_fer = astar(graph_train, start_latlng, end_latlng)
+
+    # --------------- Bus ---------------------
+
+    chemin, infos, coord_depart, coord_arrivee, stop_depart, stop_arrivee = bus(depart, arrive, "carte")
 
     # --------------- Carte ---------------------
 
@@ -86,7 +88,37 @@ def createMap(depart, arrive):
     # Ajouter les lignes (PolyLine)
     folium.PolyLine(route_coords, color='blue', weight=3, opacity=0.7).add_to(map_folium)
     folium.PolyLine(chemin_coords, color='red', weight=3, opacity=0.7).add_to(map_folium)
-    folium.PolyLine(train_coords, color='green', weight=3, opacity=0.7).add_to(map_folium)
+    folium.PolyLine(train_coords, color='purple', weight=3, opacity=0.7).add_to(map_folium)
+
+    # Tracer à pied de la position réelle au premier arrêt
+
+    folium.PolyLine(locations=[coord_depart, infos[stop_depart]["coord"]], color="green", weight=2.5, opacity=0.7,
+                    dash_array="5").add_to(map_folium)
+
+    # Tracer à pied du dernier arrêt à la destination réelle
+
+    folium.PolyLine(locations=[infos[stop_arrivee]["coord"], coord_arrivee], color="green", weight=2.5, opacity=0.7,
+                    dash_array="5").add_to(map_folium)
+
+    # Tracer les points du chemin
+
+    chemin_coords = [infos[stop]["coord"] for stop in chemin]
+
+    folium.PolyLine(locations=chemin_coords, color="pink", weight=3, opacity=0.7).add_to(map_folium)
+
+    # Ajouter un marqueur pour chaque arrêt
+
+    for stop in chemin:
+        nom = infos[stop]["nom"]
+        coord = infos[stop]["coord"]
+        folium.CircleMarker(
+            location=coord,
+            radius=4,
+            popup=nom,
+            color='pink',
+            fill=True,
+            fill_color='pink'
+        ).add_to(map_folium)
 
     folium.Marker(start_latlng, popup="Départ").add_to(map_folium)
     folium.Marker(end_latlng, popup="Arrivée").add_to(map_folium)
