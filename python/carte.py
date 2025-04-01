@@ -73,6 +73,30 @@ def createMap(depart, arrive):
 
     # Carte Folium
     map_folium = folium.Map(location=start_latlng, zoom_start=13)
+    
+    legend_html = '''
+         <div style="
+             position: fixed;
+             bottom: 20px;
+             right: 20px;
+             width: 180px;
+             background-color: white;
+             border: 1px solid grey;
+             border-radius: 5px;
+             padding: 10px;
+             box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+             font-size: 13px;
+             z-index: 9999;
+         ">
+         <b>Légende</b><br>
+         <span style="color:blue;">&#9632;</span> Route<br>
+         <span style="color:red;">&#9632;</span> Chemin à pied<br>
+         <span style="color:purple;">&#9632;</span> Train<br>
+         <span style="color:green;">&#9632;</span> Marcher<br>
+         <span style="color:pink;">&#9632;</span> Arrêts
+         </div>
+    '''
+    map_folium.get_root().html.add_child(folium.Element(legend_html))
 
     route_coords = []
     chemin_coords = []
