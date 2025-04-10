@@ -2,14 +2,15 @@
 
 header('Content-Type: application/json');
 
-if (isset($_POST['depart']) && isset($_POST['arrive'])) { // On vérifie que depart et arrive sont remplies
+if (isset($_POST['depart']) && isset($_POST['arrive']) && isset($_POST['jourTeletravail'])) { // On vérifie que depart et arrive sont remplies
     // Récupère les adresses saisies
     $depart = escapeshellarg($_POST['depart']);
     $arrive = escapeshellarg($_POST['arrive']);
+    $jourTeletravail = escapeshellarg($_POST['jourTeletravail']);
 
 
     // Commande pour exécuter le script Python
-    $command = "python ../python/calcul.py $depart $arrive";
+    $command = "python ../python/calcul.py $depart $arrive $jourTeletravail";
 
     // On exécute le script Python et on récupère la sortie
     $output = shell_exec($command);

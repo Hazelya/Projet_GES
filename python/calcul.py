@@ -12,20 +12,35 @@ import mpu
 from packageGES.calcul_ges import calcul_emission, calcul_prix, calcul_temps
 from packageGES.bus import bus
 
-
 liste_transport = {
-    "Moto": "graph_drive",
+    "Moto thermique": "graph_drive",
     "Voiture thermique": "graph_drive",
-    "Scooter et moto légère": "graph_drive",
+    "Covoiturage thermique (1 passager)": "graph_drive",
+    "Covoiturage thermique (2 passagers)": "graph_drive",
+    "Covoiturage thermique (3 passagers)": "graph_drive",
+    "Covoiturage thermique (4 passagers)": "graph_drive",
+    "Scooter ou moto légère thermique": "graph_drive",
     "Voiture électrique": "graph_drive",
-    "Autocar": "graph_drive",
+    "Covoiturage électrique (1 passager)": "graph_drive",
+    "Covoiturage électrique (2 passagers)": "graph_drive",
+    "Covoiturage électrique (3 passagers)": "graph_drive",
+    "Covoiturage électrique (4 passagers)": "graph_drive",
+    "TER": "graph_train",
+    "Autocar thermique": "graph_drive",
     "Vélo à assistance électrique": "graph_walk",
-    "Trottinette électrique": "graph_walk",
-    "Vélo": "graph_walk",
+    "Trottinette à assistance électrique": "graph_walk",
+    "RER ou Transilien": "graph_train",
+    "Intercités": "graph_train",
+    "Métro": "graph_train",
+    "Tramway": "graph_train",
+    "TGV": "graph_train",
+    "Vélo mécanique": "graph_walk",
     "Marche": "graph_walk",
-    "TER" : "graph_train",
-    "Bus thermique": "graph_bus",
+    # Toujours mettre les "graph_bus" à la fin
+    "Bus thermique": "graph_bus"
 }
+
+
 
 
 
@@ -94,7 +109,7 @@ def shortest_path(graph, start_latlng, end_latlng):
 
 
 
-def calcul(depart, arrive):
+def calcul(depart, arrive, jourTeletravail):
     """
     Calcul les émissions le prix... pour chaque véhicule entre deux adresses donnés
     :param depart:
@@ -119,6 +134,7 @@ def calcul(depart, arrive):
     with open("../graphCalvados/graph_train.pkl", "rb") as f:
         graph_train = pickle.load(f)
 
+
     # chemin le plus court (A-star) pour chaque graph
     route = shortest_path(graph_drive, start_latlng, end_latlng)
     chemin = shortest_path(graph_walk, start_latlng, end_latlng)
@@ -133,13 +149,17 @@ def calcul(depart, arrive):
                 distance_km = distance(graph_drive, route)
             elif graph == "graph_train" :
                 distance_km = distance(graph_train, fer)
-            elif graph == "graph_bus" :
-                distance_km, distance_trajet, chemin = bus(depart, arrive, "calcul")
-            else:
+            elif graph == "graph_walk" :
                 distance_km = distance(graph_walk, chemin)
+                #distance_km, distance_trajet, chemin = bus(depart, arrive, "calcul")
+            else:
+                result = bus(depart, arrive, "calcul")
+                if result is None:
+                    raise ValueError(f"La fonction bus() n'a rien renvoyé pour {depart} → {arrive}")
+                distance_km, distance_trajet, chemin = result
 
-            # On récupère une par une les informations (fonction de notre propre package)
-            carbon = calcul_emission(mode, distance_km)
+            # On récupère une par une les informations (fonction de notre propre package).
+            emission_km, pourcentage_sans_construction = calcul_emission(mode, distance_km)
             cost = calcul_prix(distance_km, mode)
 
             if graph == "graph_bus" :
@@ -152,12 +172,24 @@ def calcul(depart, arrive):
 
             nom = mode.encode().decode('unicode_escape') # decodage + encodage pour les caractères spéciaux dans le nom
 
+            # Calcul pour 1 an de trajet travail
+            nbr_jour = 218 - (int(jourTeletravail) * round(218/5))# 218 chiffre du gouvernement
+            distance_km_an = distance_km * nbr_jour
+
+            emission_km_an, _ = calcul_emission(mode, distance_km_an)
+            cost_an = calcul_prix(distance_km_an, mode)
+
             # Remplissage du tableau avec les valeurs de chaque mode de transport
             tableau[nom] = {
                 "distance_km": distance_km,
-                "carbone": carbon,
+                "carbone": emission_km,
                 "prix": round(cost, 2),
-                "temps_min": temps
+                "temps_min": temps,
+                "pourcentage_sans_construction": pourcentage_sans_construction,
+
+                "distance_km_an" : distance_km_an,
+                "carbone_an" : emission_km_an,
+                "prix_an" : round(cost_an, 2),
             }
         except Exception as e:
             # Si on capte une erreur
@@ -172,12 +204,13 @@ def calcul(depart, arrive):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 4:
         print("Usage: python script.py <depart> <arrive>")
         sys.exit(1)
 
     # Demande départ et arrivé
     depart = sys.argv[1]
     arrive = sys.argv[2]
+    jourTeletravail = sys.argv[3]
 
-    calcul(depart, arrive)
+    calcul(depart, arrive, jourTeletravail)
