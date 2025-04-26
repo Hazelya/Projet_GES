@@ -126,7 +126,7 @@ $('#buttonCarte').click((e) => {
         .then(data => { // si on récupère bien une info du php
             const results = document.getElementById('resultat');
             results.innerHTML = '';
-            results.innerHTML = `<iframe src="../ressources/carteTemporaire.html" width="100%" height="500"></iframe>`;
+            results.innerHTML = `<iframe src="../ressources/carteTemporaire.html" width="100%" height="500"></iframe> <br>`;
 
         })
         .catch(error => { // s'il y a une quelconque erreur liée au fichier
