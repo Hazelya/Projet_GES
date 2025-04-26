@@ -89,11 +89,11 @@ def createMap(depart, arrive):
              z-index: 9999;
          ">
          <b>Légende</b><br>
-         <span style="color:blue;">&#9632;</span> Route<br>
-         <span style="color:red;">&#9632;</span> Chemin à pied<br>
+         <span style="color:red;">&#9632;</span> Route<br>
+         <span style="color:blue;">&#9632;</span> Chemin<br>
          <span style="color:purple;">&#9632;</span> Train<br>
-         <span style="color:green;">&#9632;</span> Marcher<br>
-         <span style="color:pink;">&#9632;</span> Arrêts
+         <span style="color:green;">&#9632;</span> Marche jusqu'à l'arrêt de bus.<br>
+         <span style="color:orange;">&#9632;</span> Bus / Tram
          </div>
     '''
     map_folium.get_root().html.add_child(folium.Element(legend_html))
@@ -110,8 +110,8 @@ def createMap(depart, arrive):
         train_coords.append((graph_train.nodes[node]['y'], graph_train.nodes[node]['x']))
 
     # Ajouter les lignes (PolyLine)
-    folium.PolyLine(route_coords, color='blue', weight=3, opacity=0.7).add_to(map_folium)
-    folium.PolyLine(chemin_coords, color='red', weight=3, opacity=0.7).add_to(map_folium)
+    folium.PolyLine(route_coords, color='red', weight=3, opacity=0.7).add_to(map_folium)
+    folium.PolyLine(chemin_coords, color='blue', weight=3, opacity=0.7).add_to(map_folium)
     folium.PolyLine(train_coords, color='purple', weight=3, opacity=0.7).add_to(map_folium)
 
     # Tracer à pied de la position réelle au premier arrêt
@@ -128,7 +128,7 @@ def createMap(depart, arrive):
 
     chemin_coords = [infos[stop]["coord"] for stop in chemin]
 
-    folium.PolyLine(locations=chemin_coords, color="pink", weight=3, opacity=0.7).add_to(map_folium)
+    folium.PolyLine(locations=chemin_coords, color="orange", weight=3, opacity=0.7).add_to(map_folium)
 
     # Ajouter un marqueur pour chaque arrêt
 
@@ -139,9 +139,9 @@ def createMap(depart, arrive):
             location=coord,
             radius=4,
             popup=nom,
-            color='pink',
+            color='orange',
             fill=True,
-            fill_color='pink'
+            fill_color='orange'
         ).add_to(map_folium)
 
     folium.Marker(start_latlng, popup="Départ").add_to(map_folium)
