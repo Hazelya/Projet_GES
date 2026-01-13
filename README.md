@@ -38,7 +38,9 @@ Les deux fichiers HTML du site.
 ## Comment utiliser le code :
 
 Utiliser le script python dans graphCalvados afin de télécharger les graphes (si c'est pas le cas) : 
+```bash
 python ./chemin/vers/lefichier/genererSauvegarde.py
+```
 
 Télécharger les librairies nécessaires : 
 
@@ -53,9 +55,9 @@ Télécharger les librairies nécessaires :
     => pandas
     => plotly.express
     => folium
-    => pip install git+https://github.com/Hazelya/packageGES.git
+    => packageGES : pip install git+https://github.com/Hazelya/packageGES.git
 
-Vous n'avez pouvez ouvrir le fichier HTML index.html dans une page web.
+Vous pouvez ouvrir le fichier HTML index.html dans une page web.
 Et profitez du site.
 
 
